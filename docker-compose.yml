@@ -1,0 +1,47 @@
+# Specifies the Docker Compose file format version
+version: '3.8'
+
+# Define the services (containers) that make up your app
+services:
+  # The Node.js application service
+  app:
+    build: . # Build the image from the Dockerfile in the current directory
+    ports:
+      # Map port 3000 of the container to port 3000 on the host machine
+      - "3000:3000"
+    volumes:
+      # Mount the 'app' folder on the host to '/usr/src/app' in the container
+      # This allows for live code changes without rebuilding the image
+      - ./app:/usr/src/app
+      # Anonymously mount the node_modules folder to prevent host override
+      - /usr/src/app/node_modules
+    environment:
+      # Pass database connection details to the Node.js app as environment variables
+      - DB_HOST=db
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=mydatabase
+      - DB_PORT=5432
+    depends_on:
+      # This service will not start until the 'db' service is healthy
+      - db
+
+  # The PostgreSQL database service
+  db:
+    image: postgres:16-alpine # Use the official PostgreSQL 16 image
+    environment:
+      # These variables are used by the Postgres image to initialize the database
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
+    volumes:
+      # Persist database data by mounting a named volume
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Optional: expose the database port to the host for debugging
+      # Only do this if you need to connect with a GUI client like DBeaver or Postico
+      - "5432:5432"
+
+# Define the named volume for data persistence
+volumes:
+  db-data:
